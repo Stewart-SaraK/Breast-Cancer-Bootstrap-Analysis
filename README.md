@@ -2,6 +2,13 @@
 **Overview**
 This project evaluates the reliability of logistic regression for classifying malignant and benign breast tumors using the Wisconsin Diagnostic Breast Cancer dataset. Rather than focusing solely on predictive performance, the analysis investigates the stability of model coefficients using multiple bootstrap resampling techniques to validate statistical inference.
 
+**Project Highlights**
+- Built a logistic regression model for breast cancer classification
+- Conducted 6,000 total bootstrap resamples across three methods
+- Compared bootstrap and analytical confidence intervals
+- Evaluated coefficient stability, bias, and uncertainty
+- Visualized sampling distributions to assess model robustness
+
 **Objective**
 Assess whether traditional logistic regression adequately estimates uncertainty by comparing classical Wald inference with bootstrap-based uncertainty estimation.
 
