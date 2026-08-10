@@ -63,13 +63,13 @@ Bootstrap standard errors, bias estimates, and 95% percentile confidence interva
 
 ## Bootstrap Coefficient Distributions
 
-![Bootstrap Distributions](images/Bootstrap_Distrib.png)
+![Bootstrap Distributions](images/BootstrapDistrib.png)
 
 The distributions of coefficient estimates across the three bootstrap methods provide a visual assessment of model stability. Mean texture, mean smoothness, and mean concave points demonstrated consistently positive distributions, while several other predictors showed substantially greater variability.
 
 ## Analytical vs. Bootstrap Inference
 
-![Wald vs Bootstrap Comparison](images/Wald_vs_Bootstrap.png)
+![Wald vs Bootstrap Comparison](images/WaldvsBootstrap.png)
 
 Comparison of analytical Wald estimates with bootstrap-based standard errors and confidence intervals demonstrates broad agreement across methods while highlighting differences in uncertainty for less stable predictors.
 
