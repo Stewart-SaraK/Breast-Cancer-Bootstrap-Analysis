@@ -15,29 +15,28 @@ Predictors included nine mean tumor characteristics derived from digitized fine-
 - Compactness
 - Symmetry
 - Fractal Dimension
-
-Outcome:
+  Outcome:
 - Malignant
 - Benign
 
 **Tools**
-R,
-Logistic Regression,
-Bootstrap Resampling,
-ggplot2,
-dplyr,
-tidyr,
-Statistical Inference
+  R,
+  Logistic Regression,
+  Bootstrap Resampling,
+  ggplot2,
+  dplyr,
+  tidyr,
+  Statistical Inference
 
 **Methods**
-Logistic Regression,
-Nonparametric Bootstrap (2,000 iterations),
-Parametric Bootstrap (2,000 iterations),
-Residual Bootstrap (2,000 iterations),
-Bootstrap Confidence Intervals,
-Bias Estimation,
-Standard Error Comparison,
-Density Visualization of Coefficient Distributions
+  Logistic Regression,
+  Nonparametric Bootstrap (2,000 iterations),
+  Parametric Bootstrap (2,000 iterations),
+  Residual Bootstrap (2,000 iterations),
+  Bootstrap Confidence Intervals,
+  Bias Estimation,
+  Standard Error Comparison,
+  Density Visualization of Coefficient Distributions
 
 **Key Findings**
 - Mean texture, mean smoothness, and mean concave points were consistently strong predictors of malignancy.
@@ -46,11 +45,11 @@ Density Visualization of Coefficient Distributions
 - Bootstrap validation confirmed that classical inference performed well for this dataset.
 
 **Skills Demonstrated**
-Statistical Modeling
-Logistic Regression
-Bootstrap Resampling
-Model Validation
-Confidence Interval Estimation
-Data Visualization
-Predictive Analytics
-Medical Data Analysis
+  Statistical Modeling
+  Logistic Regression
+  Bootstrap Resampling
+  Model Validation
+  Confidence Interval Estimation
+  Data Visualization
+  Predictive Analytics
+  Medical Data Analysis
