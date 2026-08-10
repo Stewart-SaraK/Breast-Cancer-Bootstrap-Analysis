@@ -1,0 +1,292 @@
+---
+title: "Breast CA Code"
+output: html_document
+date: "2025-12-07"
+---
+
+Import Data & Create Model
+```{r}
+##--------------------------------------------------
+## 0. Setup
+##--------------------------------------------------
+# Read data
+library(readxl)
+
+bc <- read_excel("C:/Users/stewa/OneDrive/Documents/Breast Cancer.xlsx")
+head(bc)
+
+set.seed(123)            # for reproducibility
+
+# Model formula you want to study:
+form <- diagnosis ~ mean_radius + mean_texture + mean_perimeter +
+                    mean_smoothness + mean_compactness + mean_concavity +
+                    mean_concave_points + mean_symmetry + mean_fractal_dimension
+
+n <- nrow(bc)
+```
+
+
+Nonparametric Bootstrap
+```{r}
+library(boot)
+
+# Statistic function for boot()
+logit_stat <- function(data, indices) {
+  d <- data[indices, ]
+
+  fit <- suppressWarnings(
+    glm(form, data = d, family = binomial)
+  )
+
+  coef(fit)
+}
+
+B <- 2000
+
+boot_nonpar <- boot(data = bc, statistic = logit_stat, R = B)
+
+# Add coefficient names
+colnames(boot_nonpar$t) <- names(coef(glm(form, data = bc, family = binomial)))
+
+# Calculate 95% percentile confidence intervals
+nonpar_ci <- t(
+  apply(
+    boot_nonpar$t,
+    2,
+    quantile,
+    probs = c(0.025, 0.975)
+  )
+)
+
+nonpar_ci
+
+```
+
+Parametric Bootstrapping
+```{r}
+set.seed(123)
+
+fit0 <- glm(form, data = bc, family = binomial)
+p_hat <- fitted(fit0)
+
+B <- 2000
+
+coefs_par <- matrix(
+  NA,
+  nrow = B,
+  ncol = length(coef(fit0))
+)
+
+colnames(coefs_par) <- names(coef(fit0))
+
+for (b in 1:B) {
+
+  y_star <- rbinom(
+    n = n,
+    size = 1,
+    prob = p_hat
+  )
+
+  bc_star <- bc
+  bc_star$diagnosis <- y_star
+
+  fit_star <- suppressWarnings(
+    glm(form, data = bc_star, family = binomial)
+  )
+
+  coefs_par[b, ] <- coef(fit_star)
+}
+
+par_ci <- t(
+  apply(
+    coefs_par,
+    2,
+    quantile,
+    probs = c(0.025, 0.975)
+  )
+)
+
+par_ci
+```
+
+Residual Bootstrapping
+```{r}
+# Residual bootstrap
+eta_hat <- predict(fit0, type = "link")
+res_dev <- residuals(fit0, type = "deviance")
+
+B <- 2000
+
+coefs_resid <- matrix(
+  NA,
+  nrow = B,
+  ncol = length(coef(fit0))
+)
+
+colnames(coefs_resid) <- names(coef(fit0))
+
+set.seed(123)
+
+for (b in 1:B) {
+
+  res_star <- sample(
+    res_dev,
+    size = n,
+    replace = TRUE
+  )
+
+  eta_star <- eta_hat + res_star
+  p_star <- plogis(eta_star)
+
+  y_star <- rbinom(
+    n = n,
+    size = 1,
+    prob = p_star
+  )
+
+  bc_star <- bc
+  bc_star$diagnosis <- y_star
+
+  fit_star <- suppressWarnings(
+    glm(
+      form,
+      data = bc_star,
+      family = binomial
+    )
+  )
+
+  coefs_resid[b, ] <- coef(fit_star)
+}
+
+# 95% percentile CIs for residual-based bootstrap
+resid_ci <- t(
+  apply(
+    coefs_resid,
+    2,
+    quantile,
+    probs = c(0.025, 0.975)
+  )
+)
+
+resid_ci
+```
+
+NP SE & Bias
+```{r}
+fit0 <- glm(form, data = bc, family = binomial)
+orig_coef <- coef(fit0)
+orig_coef
+
+# Standard errors (SD of bootstrap estimates)
+se_nonpar <- apply(boot_nonpar$t, 2, sd)
+se_nonpar
+
+# Bias = mean(bootstrap estimates) - original coefficient
+bias_nonpar <- colMeans(boot_nonpar$t) - orig_coef
+bias_nonpar
+```
+
+Parametric SE & Bias
+```{r}
+se_par <- apply(coefs_par, 2, sd)
+se_par
+
+bias_par <- colMeans(coefs_par) - orig_coef
+bias_par
+```
+
+Residual SE & Bias
+```{r}
+se_resid <- apply(coefs_resid, 2, sd)
+se_resid
+
+bias_resid <- colMeans(coefs_resid) - orig_coef
+bias_resid
+```
+
+Bootstrap Distribution Plots
+```{r}
+library(dplyr)
+library(tidyr)
+library(ggplot2)
+
+coef_names <- names(orig_coef)
+
+# Convert each bootstrap result to a data frame and tag with method
+df_nonpar <- as.data.frame(boot_nonpar$t)
+colnames(df_nonpar) <- coef_names
+df_nonpar$Method <- "Nonparametric"
+
+df_par <- as.data.frame(coefs_par)
+colnames(df_par) <- coef_names
+df_par$Method <- "Parametric"
+
+df_resid <- as.data.frame(coefs_resid)
+colnames(df_resid) <- coef_names
+df_resid$Method <- "Residual"
+
+# Stack them into one long data frame
+boot_long <- bind_rows(df_nonpar, df_par, df_resid) |>
+  pivot_longer(
+    cols = all_of(coef_names),
+    names_to = "Coefficient",
+    values_to = "Estimate"
+  )
+
+
+boot_long$Coefficient <- factor(
+  boot_long$Coefficient,
+  levels = coef_names
+)
+
+# Density plots of bootstrap coefficients
+ggplot(boot_long, aes(x = Estimate, fill = Method)) +
+  geom_density(alpha = 0.4) +
+  facet_wrap(~ Coefficient, scales = "free", ncol = 3) +
+  theme_minimal() +
+  labs(
+    title = "Bootstrap Distributions of Logistic Regression Coefficients",
+    x = "Coefficient Estimate",
+    y = "Density",
+    fill = "Bootstrap Method"
+  )
+```
+
+Wald SE & CI
+```{r}
+glm_sum <- summary(fit0)$coefficients
+se_glm <- glm_sum[, "Std. Error"]
+
+# 95% Wald CI: beta_hat ± 1.96 * SE
+wald_ci_low  <- orig_coef - 1.96 * se_glm
+wald_ci_high <- orig_coef + 1.96 * se_glm
+
+# Nonparametric percentile CIs
+ci_nonpar <- apply(boot_nonpar$t, 2, quantile, probs = c(0.025, 0.975))
+
+# Parametric percentile CIs
+ci_par <- apply(coefs_par, 2, quantile, probs = c(0.025, 0.975))
+
+# Residual percentile CIs
+ci_resid <- apply(coefs_resid, 2, quantile, probs = c(0.025, 0.975))
+
+bootstrap_comparison <- data.frame(
+  Coefficient = coef_names,
+  Original = orig_coef,
+  SE_glm = se_glm,
+  SE_Nonparametric = se_nonpar,
+  SE_Parametric = se_par,
+  SE_Residual = se_resid,
+  Wald_Lower = wald_ci_low,
+  Wald_Upper = wald_ci_high,
+  Nonpar_Lower = ci_nonpar[1, ],
+  Nonpar_Upper = ci_nonpar[2, ],
+  Par_Lower = ci_par[1, ],
+  Par_Upper = ci_par[2, ],
+  Resid_Lower = ci_resid[1, ],
+  Resid_Upper = ci_resid[2, ]
+)
+
+View(bootstrap_comparison)
+```
+
